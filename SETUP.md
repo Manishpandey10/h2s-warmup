@@ -10,12 +10,14 @@ In SQL Editor, run these files IN ORDER, once each:
 1. `supabase/migrations/001_earnings.sql`
 2. `supabase/migrations/002_guidance_complaints.sql`
 3. `supabase/migrations/003_official_references.sql`
+4. `supabase/migrations/004_eshram_practical_guidance.sql`
 
 Each file uses a transaction. If a file fails, fix that file's error before proceeding.
 Do not rerun a successful migration: tables/functions intentionally are not silently overwritten.
 The third file contains actual reviewed government reference notes, not dummy worker data.
 
 In Authentication → Providers → Email, keep Email/password enabled and turn **Confirm Email off** for the agreed immediate-sign-in flow. Set your Site URL to your frontend URL. Save and refresh the dashboard to verify the setting persisted. With confirmation off, Supabase treats new email addresses as confirmed without proving ownership; the app does not claim that an email was verified or gate AI on email verification. No SMTP configuration is needed for signup in this flow.
+If Confirm Email is enabled, set **Authentication → URL Configuration → Site URL** to `https://h2s-warmup.vercel.app` and add `https://h2s-warmup.vercel.app/login` to Redirect URLs. Set `NEXT_PUBLIC_SITE_URL=https://h2s-warmup.vercel.app` on the frontend and redeploy. The signup request explicitly uses that URL, and the default Supabase confirmation template should link with `{{ .ConfirmationURL }}`. If a customized template hardcodes the old deployment URL or uses `{{ .SiteURL }}` directly, update that template too. Already-sent emails retain their old links; test with a fresh signup email.
 For evaluator access, use Authentication → Users → Add user to create worker and admin test accounts with passwords of at least 8 characters.
 
 ## 2. Environment
@@ -29,6 +31,7 @@ Required for login and earnings:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+NEXT_PUBLIC_SITE_URL=https://h2s-warmup.vercel.app
 ```
 
 Required on the backend for AI help and complaint drafting:
@@ -106,10 +109,10 @@ Render supplies PORT. The start command listens on 0.0.0.0.
 If you want a separate backend, the `server/` folder contains its actual entry point. Both deployments need the entire repository:
 
 1. Backend Render Web Service: build `npm install`, start `npm run backend`, health path `/health`.
-2. Backend environment: Supabase variables + Gemini variables + `FRONTEND_ORIGIN=https://YOUR_FRONTEND_ORIGIN`.
+2. Backend environment: Supabase variables + Gemini variables + `FRONTEND_ORIGIN=https://YOUR_STABLE_VERCEL_DOMAIN`.
 3. Frontend Vercel or Render: set the Supabase variables and `NEXT_PUBLIC_API_BASE_URL=https://YOUR_BACKEND_ORIGIN` BEFORE building. The Gemini key only needs to be on the backend.
 4. For Render frontend use build `npm install && npm run build` and start `npm start`.
-5. Update FRONTEND_ORIGIN if the frontend URL changes. No trailing slash and no `/path`.
+5. Open the stable Vercel domain listed under **Domains**, not a deployment-specific preview URL. Set `FRONTEND_ORIGIN` to that exact origin, without a trailing slash or `/path`. Redeploy Render after changing it.
 
 Public `NEXT_PUBLIC_` variables are embedded during frontend build; changing them requires rebuilding the frontend.
 Neither setup needs a direct PostgreSQL connection string.

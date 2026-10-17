@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { indiaDate, isRealDate, monthBounds } from "../src/lib/dates";
+import { calendarDays, dateAllowed, monthAllowed, shiftMonth } from "../src/lib/calendar";
 import { toPaise, toRupees } from "../src/lib/money";
 import { earningInputSchema } from "../src/lib/earnings";
-import { isOfficialUrl, helpInputSchema, helpOutputSchema } from "../src/lib/guidance";
+import { isOfficialUrl, helpGenerationSchema, helpInputSchema, helpOutputSchema } from "../src/lib/guidance";
 import { complaintFactsSchema } from "../src/lib/complaints";
 import { localeFor } from "../src/lib/locale";
 import { featureCopy } from "../src/lib/feature-copy";
 import { messages } from "../src/lib/i18n";
+import { occupationFor } from "../src/lib/worker-types";
 
 describe("money is exact and bounded", () => {
   it("preserves paise without floating point multiplication", () => {
@@ -30,6 +32,22 @@ describe("Indian dates and real calendar validation", () => {
     expect(isRealDate("2024-02-29")).toBe(true);
     expect(isRealDate("2025-02-29")).toBe(false);
     expect(monthBounds("2026-12")).toEqual({ start: "2026-12-01", end: "2027-01-01" });
+  });
+});
+
+describe("calendar picker boundaries", () => {
+  it("places leap-day dates under the right weekday", () => {
+    const days = calendarDays("2024-02");
+    expect(days.indexOf("2024-02-01")).toBe(3);
+    expect(days.filter(Boolean)).toHaveLength(29);
+    expect(days.length % 7).toBe(0);
+  });
+  it("moves across years and blocks dates beyond allowed limits", () => {
+    expect(shiftMonth("2026-12", 1)).toBe("2027-01");
+    expect(dateAllowed("2024-02-29", "2020-01-01", "2024-02-29")).toBe(true);
+    expect(dateAllowed("2024-03-01", "2020-01-01", "2024-02-29")).toBe(false);
+    expect(monthAllowed("2026-10", "2000-01", "2026-10")).toBe(true);
+    expect(monthAllowed("2026-11", "2000-01", "2026-10")).toBe(false);
   });
 });
 
@@ -67,6 +85,18 @@ describe("earnings input", () => {
 });
 
 describe("guidance and complaints", () => {
+  it("sends the selected worker context to guidance in English", () => {
+    expect(occupationFor("delivery", "")).toBe("Delivery partner");
+    expect(occupationFor("dailyWage", "")).toBe("Daily-wage worker");
+    expect(occupationFor("other", "  Tailor  ")).toBe("Tailor");
+    expect(helpInputSchema.safeParse({
+      question: "How can I get help?",
+      category: "rights",
+      state: "Punjab",
+      occupation: occupationFor("other", "Tailor"),
+      language: "pa",
+    }).success).toBe(true);
+  });
   it("accepts Punjabi for both AI flows and provides localized labels", () => {
     expect(helpInputSchema.safeParse({
       question: "ਮੈਨੂੰ ਕਿਹੜੇ ਦਸਤਾਵੇਜ਼ ਚਾਹੀਦੇ ਹਨ?",
@@ -101,6 +131,19 @@ describe("guidance and complaints", () => {
         source_ids: [],
       }).success,
     ).toBe(false);
+  });
+  it("allows an honest insufficient-source signal without a fabricated answer", () => {
+    expect(helpGenerationSchema.safeParse({
+      status: "insufficient",
+      answer: "",
+      next_step: "",
+      source_ids: [],
+    }).success).toBe(true);
+    expect(helpOutputSchema.safeParse({
+      answer: "",
+      next_step: "",
+      source_ids: [],
+    }).success).toBe(false);
   });
   it("requires the real complaint facts before generating", () => {
     expect(

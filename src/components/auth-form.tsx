@@ -5,10 +5,11 @@ import { z } from "zod";
 import { useLanguage } from "./language-provider";
 import { browserSupabase } from "@/lib/supabase/browser";
 import type { MessageKey } from "@/lib/i18n";
+import { LoadingSpinner } from "./loading-spinner";
 
 const credentials = z.object({
   email: z.string().trim().email().max(254),
-  password: z.string().min(8).max(128),
+  password: z.string().min(1).max(128),
 });
 
 export function AuthForm({ admin = false }: { admin?: boolean }) {
@@ -24,8 +25,8 @@ export function AuthForm({ admin = false }: { admin?: boolean }) {
       email: form.get("email"),
       password: form.get("password"),
     });
-    if (!parsed.success) {
-      setMessage("invalidAuth");
+    if (!parsed.success || (mode === "signup" && parsed.data.password.length < 8)) {
+      setMessage(mode === "signin" ? "invalidLogin" : "invalidAuth");
       return;
     }
     setBusy(true);
@@ -34,10 +35,23 @@ export function AuthForm({ admin = false }: { admin?: boolean }) {
       const auth = browserSupabase().auth;
       if (mode === "signin") {
         const { error } = await auth.signInWithPassword(parsed.data);
-        if (error) setMessage("authError");
+        if (error) {
+          setMessage(
+            error.code === "email_not_confirmed"
+              ? "confirmEmail"
+              : error.status === 429
+                ? "authRateLimit"
+                : "authError",
+          );
+        }
       } else {
-        const { data, error } = await auth.signUp(parsed.data);
-        if (error) setMessage("signupError");
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const emailRedirectTo = new URL("/login", siteUrl).toString();
+        const { data, error } = await auth.signUp({
+          ...parsed.data,
+          options: { emailRedirectTo },
+        });
+        if (error) setMessage(error.status === 429 ? "authRateLimit" : "signupError");
         else if (!data.session) setMessage("confirmEmail");
       }
     } catch {
@@ -87,15 +101,16 @@ export function AuthForm({ admin = false }: { admin?: boolean }) {
             name="password"
             type="password"
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            minLength={8}
+            minLength={mode === "signup" ? 8 : 1}
             maxLength={128}
             required
             aria-describedby="password-hint"
           />
           <p className="hint" id="password-hint">
-            {t.passwordHint}
+            {mode === "signup" ? t.passwordHint : t.loginPasswordHint}
           </p>
-          <button className="primary full" type="submit">
+          <button className="primary full" type="submit" aria-busy={busy}>
+            {busy && <LoadingSpinner />}
             {busy ? t.wait : mode === "signin" ? t.signIn : t.signUp}
           </button>
         </fieldset>

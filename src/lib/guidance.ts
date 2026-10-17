@@ -51,3 +51,12 @@ export const helpOutputSchema = z
     source_ids: z.array(z.string().uuid()).min(1).max(4),
   })
   .strict();
+
+export const helpGenerationSchema = z
+  .object({
+    status: z.enum(["answered", "insufficient"]),
+    answer: z.string().trim().max(900),
+    next_step: z.string().trim().max(300),
+    source_ids: z.array(z.string().uuid()).max(4),
+  })
+  .strict();

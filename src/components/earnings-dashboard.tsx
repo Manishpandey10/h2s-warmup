@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { preparePageSwitch } from "@/lib/page-switch";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "./language-provider";
 import { EarningForm } from "./earning-form";
 import { indiaDate } from "@/lib/dates";
@@ -17,10 +18,19 @@ import {
 import { errorMessage, type MessageKey } from "@/lib/i18n";
 import { featureCopy } from "@/lib/feature-copy";
 import { UiIcon } from "./ui-icon";
+import { DatePicker } from "./date-picker";
+import { LoadingSpinner } from "./loading-spinner";
 
 export function EarningsDashboard() {
   const { language, t } = useLanguage();
   const c = featureCopy(language);
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(localeFor(language), {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }), [language]);
+  const hoursFormatter = useMemo(() => new Intl.NumberFormat(localeFor(language), {
+    maximumFractionDigits: 1,
+  }), [language]);
   const [month, setMonth] = useState(indiaDate().slice(0, 7));
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
@@ -78,14 +88,16 @@ export function EarningsDashboard() {
   }
 
   const total = result?.summary;
-  const cards = total
-    ? [
-        { label: t.received, value: total.received_paise, style: "" },
-        { label: t.expenses, value: total.expense_paise, style: "" },
-        { label: t.net, value: total.received_paise - total.expense_paise, style: "highlight" },
-        { label: t.pending, value: total.pending_paise, style: "" },
-      ]
-    : [];
+  const cards = [
+    { label: t.received, value: total?.received_paise ?? null, style: "" },
+    { label: t.expenses, value: total?.expense_paise ?? null, style: "" },
+    {
+      label: t.net,
+      value: total ? total.received_paise - total.expense_paise : null,
+      style: "highlight",
+    },
+    { label: t.pending, value: total?.pending_paise ?? null, style: "" },
+  ];
 
   return (
     <>
@@ -98,58 +110,64 @@ export function EarningsDashboard() {
         </div>
         <div className="month-control">
           <label htmlFor="month">{t.month}</label>
-          <input
+          <DatePicker
             id="month"
-            type="month"
+            label={t.month}
+            mode="month"
             min="2000-01"
-            max="2099-12"
+            max={indiaDate().slice(0, 7)}
             value={month}
-            onChange={(event) => {
-              if (/^20\d{2}-(0[1-9]|1[0-2])$/.test(event.target.value)) {
-                setMonth(event.target.value);
-                setPage(0);
-                setNotice(null);
-              }
+            onChange={(selected) => {
+              setMonth(selected);
+              setPage(0);
+              setNotice(null);
             }}
           />
         </div>
       </div>
       <div className="quick-actions" aria-label={t.mainNavigation}>
-        <Link href="/help" className="quick-action">
+        <Link
+          href="/help"
+          scroll={false}
+          onNavigate={preparePageSwitch}
+          className="quick-action"
+        >
           <span className="quick-icon"><UiIcon name="help" size={23} /></span>
           <span><strong>{t.getHelp}</strong><small>{c.helpIntro}</small></span>
           <UiIcon name="arrow" size={19} />
         </Link>
-        <Link href="/complaints" className="quick-action">
+        <Link
+          href="/complaints"
+          scroll={false}
+          onNavigate={preparePageSwitch}
+          className="quick-action"
+        >
           <span className="quick-icon"><UiIcon name="document" size={23} /></span>
           <span><strong>{t.writeComplaint}</strong><small>{c.complaintIntro}</small></span>
           <UiIcon name="arrow" size={19} />
         </Link>
       </div>
       <section aria-label={t.summary} aria-busy={loading}>
-        {loading ? (
-          <p role="status" className="notice">
-            {t.loading}
+        {loading && <p role="status" className="sr-only">{t.loading}</p>}
+        <div className="stats">
+          {cards.map((card) => (
+            <div className={`stat${card.style ? ` ${card.style}` : ""}${loading ? " stat-loading" : ""}`} key={card.label}>
+              <span>{card.label}</span>
+              <strong>
+                {loading ? (
+                  <span className="stat-shimmer" aria-hidden="true" />
+                ) : card.value === null ? "—" : money(card.value, language)}
+              </strong>
+            </div>
+          ))}
+        </div>
+        {total && !loading && (
+          <p className="hint">
+            {t.netHelp} · {t.hours}:{" "}
+            {(total.minutes_worked / 60).toLocaleString(localeFor(language), {
+              maximumFractionDigits: 1,
+            })}
           </p>
-        ) : (
-          total && (
-            <>
-              <div className="stats">
-                {cards.map((card) => (
-                  <div className={`stat ${card.style}`} key={card.label}>
-                    <span>{card.label}</span>
-                    <strong>{money(card.value, language)}</strong>
-                  </div>
-                ))}
-              </div>
-              <p className="hint">
-                {t.netHelp} · {t.hours}:{" "}
-                {(total.minutes_worked / 60).toLocaleString(localeFor(language), {
-                  maximumFractionDigits: 1,
-                })}
-              </p>
-            </>
-          )
         )}
       </section>
       {notice && (
@@ -197,93 +215,97 @@ export function EarningsDashboard() {
             <p className="hint">
               {t.countLabel}: {result.count}
             </p>
-            <ul className="entry-list">
-              {result.entries.map((entry) => (
-                <li key={entry.id} className="entry">
-                  <time dateTime={entry.work_date}>
-                    {new Intl.DateTimeFormat(localeFor(language), {
-                      dateStyle: "medium",
-                      timeZone: "UTC",
-                    }).format(new Date(`${entry.work_date}T00:00:00Z`))}
-                  </time>
-                  <dl className="entry-values">
-                    <div>
-                      <dt>{t.received}</dt>
-                      <dd>{money(entry.received_paise, language)}</dd>
-                    </div>
-                    <div>
-                      <dt>{t.expenses}</dt>
-                      <dd>{money(entry.expense_paise, language)}</dd>
-                    </div>
-                    <div>
-                      <dt>{t.pending}</dt>
-                      <dd>{money(entry.pending_paise, language)}</dd>
-                    </div>
-                    <div>
-                      <dt>{t.hours}</dt>
-                      <dd>
-                        {(entry.minutes_worked / 60).toLocaleString(
-                          localeFor(language),
-                          { maximumFractionDigits: 1 },
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                  {entry.note && <p className="user-text">{entry.note}</p>}
-                  {deleting === entry.id ? (
-                    <div className="delete-confirm" role="group" aria-label={t.deleteQuestion}>
-                      <p>{t.deleteQuestion}</p>
-                      <div className="actions">
-                        <button
-                          type="button"
-                          className="danger"
-                          disabled={deleteBusy}
-                          onClick={() => deleteEntry(entry.id)}
-                        >
-                          {deleteBusy ? t.deleting : t.confirmDelete}
-                        </button>
-                        <button
-                          className="secondary"
-                          type="button"
-                          disabled={deleteBusy}
-                          onClick={() => setDeleting(null)}
-                        >
-                          {t.cancel}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="actions" role="group" aria-label={t.recordActions}>
-                      <button
-                        type="button"
-                        className="secondary"
-                        disabled={deleteBusy}
-                        onClick={() => {
-                          setEditing(entry);
-                          formAnchor.current?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                          requestAnimationFrame(() =>
-                            document.getElementById("entry-heading")?.focus(),
-                          );
-                        }}
-                      >
-                        {t.edit}
-                      </button>
-                      <button
-                        type="button"
-                        className="text-danger"
-                        disabled={deleteBusy}
-                        onClick={() => setDeleting(entry.id)}
-                      >
-                        {t.remove}
-                      </button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <div className="entry-table-wrap">
+              <table className="entry-table" aria-labelledby="history-heading">
+                <thead>
+                  <tr>
+                    <th scope="col">{t.date}</th>
+                    <th scope="col">{t.received}</th>
+                    <th scope="col">{t.expenses}</th>
+                    <th scope="col">{t.pending}</th>
+                    <th scope="col">{t.hours}</th>
+                    <th scope="col">{t.recordActions}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.entries.map((entry) => (
+                    <Fragment key={entry.id}>
+                      <tr className="entry-row">
+                        <td className="entry-date" data-label={t.date}>
+                          <time dateTime={entry.work_date}>
+                            {dateFormatter.format(new Date(`${entry.work_date}T00:00:00Z`))}
+                          </time>
+                          {entry.note && <span className="entry-note user-text">{entry.note}</span>}
+                        </td>
+                        <td data-label={t.received}>{money(entry.received_paise, language)}</td>
+                        <td data-label={t.expenses}>{money(entry.expense_paise, language)}</td>
+                        <td className="entry-pending" data-label={t.pending}>
+                          {money(entry.pending_paise, language)}
+                        </td>
+                        <td data-label={t.hours}>
+                          {hoursFormatter.format(entry.minutes_worked / 60)}
+                        </td>
+                        <td className="entry-actions">
+                          <div className="entry-row-actions" role="group" aria-label={t.recordActions}>
+                            <button
+                              type="button"
+                              className="secondary"
+                              disabled={deleteBusy}
+                              onClick={() => {
+                                setEditing(entry);
+                                formAnchor.current?.scrollIntoView({ behavior: "auto", block: "start" });
+                                requestAnimationFrame(() =>
+                                  document.getElementById("entry-heading")?.focus(),
+                                );
+                              }}
+                            >
+                              {t.edit}
+                            </button>
+                            <button
+                              type="button"
+                              className="text-danger"
+                              disabled={deleteBusy}
+                              onClick={() => setDeleting(entry.id)}
+                            >
+                              {t.remove}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {deleting === entry.id && (
+                        <tr className="entry-confirm-row">
+                          <td colSpan={6}>
+                            <div className="delete-confirm" role="group" aria-label={t.deleteQuestion}>
+                              <p>{t.deleteQuestion}</p>
+                              <div className="actions">
+                                <button
+                                  type="button"
+                                  className="danger"
+                                  disabled={deleteBusy}
+                                  aria-busy={deleteBusy}
+                                  onClick={() => deleteEntry(entry.id)}
+                                >
+                                  {deleteBusy && <LoadingSpinner />}
+                                  {deleteBusy ? t.deleting : t.confirmDelete}
+                                </button>
+                                <button
+                                  className="secondary"
+                                  type="button"
+                                  disabled={deleteBusy}
+                                  onClick={() => setDeleting(null)}
+                                >
+                                  {t.cancel}
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <nav className="pagination" aria-label={t.history}>
               <button
                 className="secondary"

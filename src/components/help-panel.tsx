@@ -9,6 +9,9 @@ import { helpInputSchema, helpOutputSchema } from "@/lib/guidance";
 import { apiRequest, ClientApiError } from "@/lib/client-api";
 import { errorMessage, type Language } from "@/lib/i18n";
 import { occupationFor, workerTypes, type WorkerType } from "@/lib/worker-types";
+import { ChoiceSelect } from "./choice-select";
+import { LoadingSpinner } from "./loading-spinner";
+import { VoiceInput } from "./voice-input";
 
 const workerIcons: Record<WorkerType, IconName> = {
   delivery: "bike",
@@ -112,13 +115,15 @@ export function HelpPanel() {
               </div>
             )}
             <label htmlFor="category">{c.category}</label>
-            <select name="category" id="category">
-              {(["schemes", "rights", "safety", "documents"] as const).map((value) => (
-                <option value={value} key={value}>
-                  {c[value]}
-                </option>
-              ))}
-            </select>
+            <ChoiceSelect
+              name="category"
+              id="category"
+              label={c.category}
+              options={(["schemes", "rights", "safety", "documents"] as const).map((value) => ({
+                value,
+                label: c[value],
+              }))}
+            />
             <label htmlFor="state">{c.state}</label>
             <input
               name="state"
@@ -131,6 +136,7 @@ export function HelpPanel() {
             <label htmlFor="question">{c.question}</label>
             <textarea
               id="question"
+              lang={language}
               name="question"
               required
               minLength={5}
@@ -138,21 +144,18 @@ export function HelpPanel() {
               rows={4}
               aria-describedby="help-privacy"
             />
+            <VoiceInput targetId="question" />
             <p className="hint" id="help-privacy">
               {c.helpPrivacy}
             </p>
-            <button className="primary" type="submit">
+            <button className="primary" type="submit" aria-busy={busy}>
+              {busy && <LoadingSpinner />}
               {busy ? c.thinking : c.ask}
               {!busy && <UiIcon name="arrow" size={19} />}
             </button>
           </fieldset>
         </form>
       </section>
-      {busy && (
-        <p className="notice" role="status">
-          {c.thinking}
-        </p>
-      )}
       {renderError && (
         <p className="error" role="alert">
           {renderError}

@@ -1,6 +1,21 @@
 import type { Language } from "./i18n";
 import { localeFor } from "./locale";
 
+function currencyFormatter(language: Language) {
+  return new Intl.NumberFormat(localeFor(language), {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+}
+
+const currencyFormatters: Record<Language, Intl.NumberFormat> = {
+  en: currencyFormatter("en"),
+  hi: currencyFormatter("hi"),
+  pa: currencyFormatter("pa"),
+};
+
 // Store and calculate integer paise, avoiding floating-point currency arithmetic.
 export function toPaise(value: string): number | null {
   const text = value.trim();
@@ -15,10 +30,5 @@ export function toRupees(paise: number): string {
 }
 
 export function money(paise: number, language: Language): string {
-  return new Intl.NumberFormat(localeFor(language), {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(paise / 100);
+  return currencyFormatters[language].format(paise / 100);
 }

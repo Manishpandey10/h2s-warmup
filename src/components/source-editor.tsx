@@ -9,6 +9,9 @@ import { errorMessage } from "@/lib/i18n";
 import { sourceInputSchema, sourceRowSchema, type GuidanceSource } from "@/lib/guidance";
 import { indiaDate } from "@/lib/dates";
 import { UiIcon } from "./ui-icon";
+import { DatePicker } from "./date-picker";
+import { LoadingSpinner } from "./loading-spinner";
+import { ChoiceSelect } from "./choice-select";
 
 export function SourceEditor() {
   const { language, t } = useLanguage();
@@ -141,17 +144,16 @@ export function SourceEditor() {
                   {c.officialOnly}
                 </p>
                 <label htmlFor="source-category">{c.category}</label>
-                <select
+                <ChoiceSelect
                   id="source-category"
                   name="category"
+                  label={c.category}
                   defaultValue={editing?.category ?? "schemes"}
-                >
-                  {(["schemes", "rights", "safety", "documents"] as const).map((value) => (
-                    <option value={value} key={value}>
-                      {c[value]}
-                    </option>
-                  ))}
-                </select>
+                  options={(["schemes", "rights", "safety", "documents"] as const).map((value) => ({
+                    value,
+                    label: c[value],
+                  }))}
+                />
                 <label htmlFor="source-content">{c.sourceContent}</label>
                 <textarea
                   id="source-content"
@@ -173,17 +175,18 @@ export function SourceEditor() {
                   required
                 />
                 <label htmlFor="source-verified">{c.reviewedOn}</label>
-                <input
+                <DatePicker
                   id="source-verified"
                   name="verified_on"
-                  type="date"
+                  label={c.reviewedOn}
                   min="2020-01-01"
                   max={indiaDate()}
                   defaultValue={editing?.verified_on ?? indiaDate()}
                   required
                 />
                 <div className="actions">
-                  <button className="primary" type="submit">
+                  <button className="primary" type="submit" aria-busy={busy}>
+                    {busy && <LoadingSpinner />}
                     {busy ? t.saving : c.sourceSave}
                   </button>
                   {editing && (
@@ -228,7 +231,7 @@ export function SourceEditor() {
                     submissionId.current = null;
                     setSaved(false);
                     requestAnimationFrame(() => {
-                      formRef.current?.scrollIntoView({ behavior: "smooth" });
+                      formRef.current?.scrollIntoView({ behavior: "auto" });
                       document.getElementById("source-title")?.focus();
                     });
                   }}

@@ -7,6 +7,8 @@ import { indiaDate } from "@/lib/dates";
 import { toPaise, toRupees } from "@/lib/money";
 import { apiRequest, ClientApiError } from "@/lib/client-api";
 import { errorMessage, type MessageKey } from "@/lib/i18n";
+import { DatePicker } from "./date-picker";
+import { LoadingSpinner } from "./loading-spinner";
 
 export function EarningForm({
   entry,
@@ -67,10 +69,10 @@ export function EarningForm({
       <form onSubmit={submit}>
         <fieldset disabled={busy}>
           <label htmlFor="work-date">{t.date}</label>
-          <input
+          <DatePicker
             id="work-date"
             name="work_date"
-            type="date"
+            label={t.date}
             min="2000-01-01"
             max={indiaDate()}
             defaultValue={entry?.work_date ?? indiaDate()}
@@ -138,7 +140,8 @@ export function EarningForm({
             {t.noteHint}
           </p>
           <div className="actions">
-            <button className="primary" type="submit">
+            <button className="primary" type="submit" aria-busy={busy}>
+              {busy && <LoadingSpinner />}
               {busy ? t.saving : entry ? t.update : t.save}
             </button>
             {entry && (
