@@ -22,6 +22,7 @@ const workerIcons: Record<WorkerType, IconName> = {
 };
 
 const responseSchema = helpOutputSchema.extend({
+  search_suggestions_html: z.string(),
   sources: z.array(
     z.object({
       id: z.string().uuid(),
@@ -168,7 +169,7 @@ export function HelpPanel() {
             <h2>{c.nextStep}</h2>
             <p>{answer.data.next_step}</p>
           </div>
-          <h2>{c.sources}</h2>
+          <h2>{c.helpSources}</h2>
           <ul className="source-list">
             {answer.data.sources.map((source) => (
               <li key={source.id}>
@@ -177,11 +178,20 @@ export function HelpPanel() {
                 </a>
                 <br />
                 <span className="hint">
-                  {c.verified}: {source.verified_on}
+                  {c.searchedOn}: {source.verified_on}
                 </span>
               </li>
             ))}
           </ul>
+          {answer.data.search_suggestions_html && (
+            <iframe
+              className="search-suggestions"
+              title="Google Search suggestions"
+              srcDoc={answer.data.search_suggestions_html}
+              sandbox="allow-popups allow-popups-to-escape-sandbox"
+              referrerPolicy="no-referrer"
+            />
+          )}
         </section>
       )}
     </div>

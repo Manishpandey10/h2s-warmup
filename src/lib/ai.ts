@@ -38,16 +38,23 @@ const providerSchema = z.object({
             ),
           })
           .optional(),
+        groundingMetadata: z.object({
+          searchEntryPoint: z.object({ renderedContent: z.string() }).optional(),
+          groundingChunks: z.array(z.object({
+            web: z.object({ uri: z.string(), title: z.string() }).optional(),
+          })).optional(),
+          groundingSupports: z.array(z.object({
+            groundingChunkIndices: z.array(z.number().int().nonnegative()).optional(),
+          })).optional(),
+        }).optional(),
       }),
     )
     .optional(),
 });
 
-export async function generateJson<T>(
-  instruction: string,
-  input: unknown,
-  schema: z.ZodType<T>,
-): Promise<T> {
+type Candidate = NonNullable<z.infer<typeof providerSchema>["candidates"]>[number];
+
+async function generateCandidate(instruction: string, input: unknown, googleSearch: boolean): Promise<Candidate> {
   const { key, model } = requireAiConfiguration();
   let response: Response;
   try {
@@ -59,6 +66,7 @@ export async function generateJson<T>(
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: instruction }] },
           contents: [{ role: "user", parts: [{ text: JSON.stringify(input) }] }],
+          ...(googleSearch ? { tools: [{ google_search: {} }] } : {}),
           generationConfig: { responseMimeType: "application/json", maxOutputTokens: 4096 },
         }),
         signal: AbortSignal.timeout(45_000),
@@ -76,11 +84,14 @@ export async function generateJson<T>(
   const provider = providerSchema.safeParse(await response.json().catch(() => null));
   const candidate = provider.success ? provider.data.candidates?.[0] : null;
   if (!candidate || candidate.finishReason !== "STOP") throw new ApiError(502, "AI_INVALID_OUTPUT");
-  const text =
-    candidate.content?.parts
-      .filter((part) => !part.thought)
-      .map((part) => part.text ?? "")
-      .join("") ?? "";
+  return candidate;
+}
+
+function candidateJson<T>(candidate: Candidate, schema: z.ZodType<T>): T {
+  const text = candidate.content?.parts
+    .filter((part) => !part.thought)
+    .map((part) => part.text ?? "")
+    .join("") ?? "";
   let decoded: unknown;
   try {
     decoded = JSON.parse(text);
@@ -90,6 +101,22 @@ export async function generateJson<T>(
   const result = schema.safeParse(decoded);
   if (!result.success) throw new ApiError(502, "AI_INVALID_OUTPUT");
   return result.data;
+}
+
+export async function generateJson<T>(
+  instruction: string,
+  input: unknown,
+  schema: z.ZodType<T>,
+): Promise<T> {
+  return candidateJson(await generateCandidate(instruction, input, false), schema);
+}
+
+export async function generateGroundedJson<T>(instruction: string, input: unknown, schema: z.ZodType<T>) {
+  const candidate = await generateCandidate(instruction, input, true);
+  return {
+    data: candidateJson(candidate, schema),
+    grounding: candidate.groundingMetadata,
+  };
 }
 
 export const plainLanguageRules = `You assist Indian gig and informal workers, including older people with limited technical literacy.

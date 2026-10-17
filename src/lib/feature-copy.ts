@@ -1,7 +1,7 @@
 import type { Language } from "./i18n";
 const en = {
   help: "Get help",
-  helpIntro: "Simple explanations from reviewed official information.",
+  helpIntro: "Simple answers using current web sources.",
   category: "What do you need help with?",
   schemes: "Welfare schemes",
   rights: "Worker rights",
@@ -21,6 +21,8 @@ const en = {
   thinking: "Preparing your answer…",
   nextStep: "What to do next",
   sources: "Official sources",
+  helpSources: "Sources found online",
+  searchedOn: "Searched on",
   verified: "Reviewed",
   helpPrivacy:
     "Your question and work context will be sent to Gemini. Do not include Aadhaar, bank details, or passwords.",
@@ -30,10 +32,8 @@ const en = {
     "The AI service could not answer. Check your key, model access, or connection, then try again.",
   aiInvalid: "The AI answer could not be verified or was incomplete. Please try again.",
   limit: "The AI request limit was reached. Try again later.",
-  noSources:
-    "No recently reviewed sources are available for this topic and location. Ask the administrator to add one.",
-  noRelevantSource:
-    "I don't have verified information that answers this exact question yet. Please ask the administrator to add a relevant official source.",
+  noSources: "No source was found for this question. Try asking it another way.",
+  noRelevantSource: "No reliable source was returned for this question. Try asking it another way.",
   complaints: "Write a complaint",
   complaintIntro: "Describe what happened. Review the draft before you send it yourself.",
   name: "Your name",
@@ -97,7 +97,7 @@ const en = {
 type Copy = { [Key in keyof typeof en]: string };
 const hi: Copy = {
   help: "मदद लें",
-  helpIntro: "जाँची गई सरकारी जानकारी, आसान भाषा में।",
+  helpIntro: "ताज़ा ऑनलाइन स्रोतों से आसान जवाब।",
   category: "किस बारे में मदद चाहिए?",
   schemes: "सरकारी योजनाएँ",
   rights: "कामगारों के अधिकार",
@@ -117,6 +117,8 @@ const hi: Copy = {
   thinking: "जवाब तैयार हो रहा है…",
   nextStep: "अब क्या करें",
   sources: "सरकारी स्रोत",
+  helpSources: "ऑनलाइन मिले स्रोत",
+  searchedOn: "खोज की तारीख",
   verified: "जाँच की तारीख",
   helpPrivacy:
     "आपका सवाल और काम की जानकारी Gemini को भेजी जाएगी। आधार, बैंक की जानकारी या पासवर्ड न लिखें।",
@@ -125,10 +127,8 @@ const hi: Copy = {
   aiFailed: "AI से जवाब नहीं आया। API key, मॉडल की उपलब्धता या कनेक्शन जाँचकर फिर कोशिश करें।",
   aiInvalid: "AI का जवाब अधूरा था या उसकी जाँच नहीं हो सकी। फिर कोशिश करें।",
   limit: "AI अनुरोध की सीमा पूरी हो गई है। कुछ समय बाद कोशिश करें।",
-  noSources:
-    "इस विषय और जगह के लिए हाल में जाँचा गया स्रोत नहीं है। एडमिन से स्रोत जोड़ने को कहें।",
-  noRelevantSource:
-    "इस सवाल का सही जवाब देने के लिए अभी जाँची हुई जानकारी नहीं है। एडमिन से संबंधित सरकारी स्रोत जोड़ने को कहें।",
+  noSources: "इस सवाल का स्रोत नहीं मिला। सवाल दूसरे शब्दों में पूछें।",
+  noRelevantSource: "इस सवाल के लिए भरोसेमंद स्रोत नहीं मिला। सवाल दूसरे शब्दों में पूछें।",
   complaints: "शिकायत लिखें",
   complaintIntro: "बताएँ क्या हुआ। भेजने से पहले तैयार शिकायत जाँच लें।",
   name: "आपका नाम",
@@ -189,7 +189,7 @@ const hi: Copy = {
 };
 const pa: Copy = {
   help: "ਮਦਦ ਲਵੋ",
-  helpIntro: "ਜਾਂਚੀ ਗਈ ਸਰਕਾਰੀ ਜਾਣਕਾਰੀ, ਸੌਖੀ ਭਾਸ਼ਾ ਵਿੱਚ।",
+  helpIntro: "ਤਾਜ਼ੇ ਆਨਲਾਈਨ ਸਰੋਤਾਂ ਨਾਲ ਸੌਖੇ ਜਵਾਬ।",
   category: "ਤੁਹਾਨੂੰ ਕਿਸ ਬਾਰੇ ਮਦਦ ਚਾਹੀਦੀ ਹੈ?",
   schemes: "ਭਲਾਈ ਸਕੀਮਾਂ",
   rights: "ਕਾਮਿਆਂ ਦੇ ਹੱਕ",
@@ -209,6 +209,8 @@ const pa: Copy = {
   thinking: "ਜਵਾਬ ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ…",
   nextStep: "ਹੁਣ ਕੀ ਕਰਨਾ ਹੈ",
   sources: "ਸਰਕਾਰੀ ਸਰੋਤ",
+  helpSources: "ਆਨਲਾਈਨ ਮਿਲੇ ਸਰੋਤ",
+  searchedOn: "ਖੋਜ ਦੀ ਤਾਰੀਖ਼",
   verified: "ਜਾਂਚ ਦੀ ਤਾਰੀਖ਼",
   helpPrivacy: "ਤੁਹਾਡਾ ਸਵਾਲ ਅਤੇ ਕੰਮ ਦੀ ਜਾਣਕਾਰੀ Gemini ਨੂੰ ਭੇਜੀ ਜਾਵੇਗੀ। ਆਧਾਰ, ਬੈਂਕ ਵੇਰਵੇ ਜਾਂ ਪਾਸਵਰਡ ਨਾ ਲਿਖੋ।",
   invalid: "ਸਾਰੀ ਜਾਣਕਾਰੀ ਜਾਂਚ ਕੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
@@ -216,8 +218,8 @@ const pa: Copy = {
   aiFailed: "AI ਤੋਂ ਜਵਾਬ ਨਹੀਂ ਆਇਆ। API key, ਮਾਡਲ ਜਾਂ ਕਨੈਕਸ਼ਨ ਜਾਂਚ ਕੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   aiInvalid: "AI ਦਾ ਜਵਾਬ ਅਧੂਰਾ ਸੀ ਜਾਂ ਉਸ ਦੀ ਜਾਂਚ ਨਹੀਂ ਹੋ ਸਕੀ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   limit: "AI ਵਰਤੋਂ ਦੀ ਹੱਦ ਪੂਰੀ ਹੋ ਗਈ ਹੈ। ਕੁਝ ਸਮੇਂ ਬਾਅਦ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
-  noSources: "ਇਸ ਵਿਸ਼ੇ ਅਤੇ ਥਾਂ ਲਈ ਹਾਲ ਹੀ ਵਿੱਚ ਜਾਂਚਿਆ ਸਰੋਤ ਨਹੀਂ ਹੈ। ਐਡਮਿਨ ਨੂੰ ਸਰੋਤ ਜੋੜਨ ਲਈ ਕਹੋ।",
-  noRelevantSource: "ਇਸ ਸਵਾਲ ਦਾ ਸਹੀ ਜਵਾਬ ਦੇਣ ਲਈ ਹਾਲੇ ਜਾਂਚੀ ਹੋਈ ਜਾਣਕਾਰੀ ਨਹੀਂ ਹੈ। ਐਡਮਿਨ ਨੂੰ ਸਬੰਧਤ ਸਰਕਾਰੀ ਸਰੋਤ ਜੋੜਨ ਲਈ ਕਹੋ।",
+  noSources: "ਇਸ ਸਵਾਲ ਲਈ ਸਰੋਤ ਨਹੀਂ ਮਿਲਿਆ। ਸਵਾਲ ਹੋਰ ਤਰੀਕੇ ਨਾਲ ਪੁੱਛੋ।",
+  noRelevantSource: "ਇਸ ਸਵਾਲ ਲਈ ਭਰੋਸੇਯੋਗ ਸਰੋਤ ਨਹੀਂ ਮਿਲਿਆ। ਸਵਾਲ ਹੋਰ ਤਰੀਕੇ ਨਾਲ ਪੁੱਛੋ।",
   complaints: "ਸ਼ਿਕਾਇਤ ਲਿਖੋ",
   complaintIntro: "ਦੱਸੋ ਕੀ ਹੋਇਆ। ਭੇਜਣ ਤੋਂ ਪਹਿਲਾਂ ਮਸੌਦਾ ਜਾਂਚੋ।",
   name: "ਤੁਹਾਡਾ ਨਾਮ",

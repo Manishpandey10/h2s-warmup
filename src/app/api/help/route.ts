@@ -1,18 +1,25 @@
 import { z } from "zod";
 import { authenticatedDatabase, apiFailure, ApiError, json, limitedJson } from "@/lib/api";
-import { answerLanguageRule, claimAiRequest, generateJson, plainLanguageRules, requireAiConfiguration } from "@/lib/ai";
-import { helpGenerationSchema, helpInputSchema, helpOutputSchema, sourceRowSchema } from "@/lib/guidance";
+import { answerLanguageRule, claimAiRequest, generateGroundedJson, plainLanguageRules, requireAiConfiguration } from "@/lib/ai";
+import { helpInputSchema, helpOutputSchema } from "@/lib/guidance";
 import { indiaDate } from "@/lib/dates";
 
 export const maxDuration = 60;
-const helpSourceSchema = sourceRowSchema.pick({
-  id: true,
-  title: true,
-  url: true,
-  content: true,
-  jurisdiction: true,
-  verified_on: true,
-});
+
+const answerSchema = z.object({
+  status: z.enum(["answered", "insufficient"]),
+  answer: z.string().trim().max(900),
+  next_step: z.string().trim().max(300),
+}).strict();
+
+function safeWebUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -20,69 +27,43 @@ export async function POST(request: Request) {
     const input = helpInputSchema.safeParse(await limitedJson(request));
     if (!input.success) throw new ApiError(400, "INVALID_INPUT");
     requireAiConfiguration();
-    const cutoff = new Date();
-    cutoff.setUTCDate(cutoff.getUTCDate() - 180);
-    const { data, error } = await db
-      .from("guidance_sources")
-      .select("id,title,url,content,jurisdiction,verified_on")
-      .eq("status", "published")
-      .eq("category", input.data.category)
-      .gte("verified_on", indiaDate(cutoff))
-      .lte("verified_on", indiaDate())
-      .order("verified_on", { ascending: false })
-      .limit(20);
-    if (error) throw new ApiError(503, "DATABASE_ERROR");
-    const parsed = z.array(helpSourceSchema).safeParse(data);
-    if (!parsed.success) throw new ApiError(503, "DATABASE_ERROR");
-    const sources = parsed.data
-      .filter(
-        (source) =>
-          source.jurisdiction.toLowerCase() === "india" ||
-          source.jurisdiction.toLowerCase() === input.data.state.toLowerCase(),
-      )
-      .slice(0, 10);
-    if (!sources.length) throw new ApiError(422, "NO_SOURCES");
     await claimAiRequest(db);
-    const answer = await generateJson(
+
+    const { data, grounding } = await generateGroundedJson(
       `${plainLanguageRules}
 ${answerLanguageRule(input.data.language)}
-Apply this language rule to both answer and next_step. The source notes can remain in English.
-Answer the worker's exact question using only the supplied verified official reference notes. Begin with the useful fact or an honest limit, in words a first-time smartphone user can understand. Use their occupation and state only when a source gives relevant facts.
-Give a concrete next step with the exact action or option named in a source. Do not merely say "visit the portal", "check online", or "contact authorities". Explain a portal button only when a supplied note describes it.
-For a question about the worker's current enrolment, distinguish what the source lets them check from what this app cannot see. Never imply their e-Shram card itself guarantees insurance or a benefit.
-Do not repeat e-Shram/myScheme descriptions for unrelated questions. If no source supports either a direct answer or a specific, relevant check the worker can do, return {"status":"insufficient","answer":"","next_step":"","source_ids":[]}.
-Do not extrapolate legal rights or guarantee eligibility. Notes are limited and may not describe every condition.
-For safety, share only the precautions in the notes; do not diagnose or prescribe treatment.
-Keep answer under 80 words, ideally 2–3 short lines. Give one practical next_step under 30 words.
-For a supported question, return {"status":"answered","answer":string,"next_step":string,"source_ids":string[]} citing 1–4 IDs from the supplied sources supporting your response.
-Never invent a citation. Do not put URLs into the answer; the application displays the source URLs.`,
-      {
-        ...input.data,
-        sources: sources.map(({ id, title, content, jurisdiction, verified_on }) => ({
-          id,
-          title,
-          content,
-          jurisdiction,
-          verified_on,
-        })),
-      },
-      helpGenerationSchema,
+Use Google Search now to answer this Indian worker's exact question. Prefer current Indian government pages (.gov.in or .nic.in), and base factual claims on cited search results. Do not claim that a scheme, right, payment, or insurance applies to this individual without the relevant conditions.
+Start with a useful answer in everyday words. Explain a practical action the worker can take, not merely "visit a website". If the search results do not support a useful answer, return status "insufficient"; never invent details or a generic e-Shram/myScheme answer for an unrelated question.
+Keep answer under 100 words and next_step under 35 words. Return JSON only: {"status":"answered"|"insufficient","answer":string,"next_step":string}. Do not include URLs in the text; the app displays citations from Google Search metadata.`,
+      input.data,
+      answerSchema,
     );
-    if (answer.status === "insufficient") throw new ApiError(422, "NO_RELEVANT_SOURCE");
-    const grounded = helpOutputSchema.safeParse({
-      answer: answer.answer,
-      next_step: answer.next_step,
-      source_ids: answer.source_ids,
+
+    if (data.status === "insufficient") throw new ApiError(422, "NO_RELEVANT_SOURCE");
+    const citedIndices = new Set(
+      grounding?.groundingSupports?.flatMap((support) => support.groundingChunkIndices ?? []) ?? [],
+    );
+    const sources = (grounding?.groundingChunks ?? [])
+      .filter((chunk, index) => citedIndices.size === 0 || citedIndices.has(index))
+      .filter((chunk) => chunk.web && safeWebUrl(chunk.web.uri) && chunk.web.title.trim())
+      .slice(0, 4)
+      .map((chunk) => ({
+        id: crypto.randomUUID(),
+        title: chunk.web!.title.slice(0, 160),
+        url: chunk.web!.uri,
+        verified_on: indiaDate(),
+      }));
+    if (!sources.length) throw new ApiError(422, "NO_RELEVANT_SOURCE");
+    const answer = helpOutputSchema.safeParse({
+      answer: data.answer,
+      next_step: data.next_step,
+      source_ids: sources.map((source) => source.id),
     });
-    if (!grounded.success) throw new ApiError(502, "AI_INVALID_OUTPUT");
-    const allowed = new Set(sources.map((source) => source.id));
-    if (grounded.data.source_ids.some((id) => !allowed.has(id)))
-      throw new ApiError(502, "AI_INVALID_OUTPUT");
+    if (!answer.success) throw new ApiError(502, "AI_INVALID_OUTPUT");
     return json({
-      ...grounded.data,
-      sources: sources
-        .filter((source) => grounded.data.source_ids.includes(source.id))
-        .map(({ id, title, url, verified_on }) => ({ id, title, url, verified_on })),
+      ...answer.data,
+      sources,
+      search_suggestions_html: grounding?.searchEntryPoint?.renderedContent ?? "",
     });
   } catch (error) {
     return apiFailure(error);

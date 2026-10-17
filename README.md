@@ -21,7 +21,7 @@ No separate Render backend is needed for the initial scope.
 ## Required workflows
 
 1. Earnings: enter and save income, expenses, unpaid amounts and working time; edit/delete entries and calculate totals in code. Monthly summaries cover all entries, with paginated history.
-2. Support: answer welfare, rights, safety, and document questions using reviewed official sources, with citations and verification dates.
+2. Support: use live Gemini Google Search grounding for welfare, rights, safety, and document questions; show the returned web sources. No admin source setup is needed for this workflow.
 3. Grievances: collect missing facts, generate an editable complaint, save it, and download it.
 
 ## Login and admin
@@ -32,7 +32,7 @@ No separate Render backend is needed for the initial scope.
 - A restricted source editor can add/edit only their own draft sources. The project owner approves publication manually in Supabase.
 - Optional actual test credentials are displayed on the admin login page after the owner creates that dedicated account and configures the environment.
 - Database schema and field names stay English. User-entered notes stay in their original language; no translated record copies are created.
-- Gemini is used for sourced guidance and complaint drafting. No key is embedded in frontend code.
+- Gemini is used for live search-grounded guidance and complaint drafting. No key is embedded in frontend code.
 
 ## Acceptance rules
 

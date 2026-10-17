@@ -170,6 +170,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .voice-status, .voice-error { font-size: .84rem; line-height: 1.4; }
 .voice-status { color: var(--muted); }
 .voice-error { color: var(--error-text); }
+.search-suggestions { display: block; width: 100%; min-height: 72px; margin-top: 12px; border: 0; }
 .danger { color: #fff; background: var(--error); }
 .text-danger { padding-inline: 0; background: transparent; color: var(--error-text); }
 .full { width: 100%; }

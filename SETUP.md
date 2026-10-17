@@ -124,7 +124,7 @@ Neither setup needs a direct PostgreSQL connection string.
 - Check expenses greater than received, pending-only entries, decimal amounts, invalid dates, and more than 24 hours.
 - Use a second user in a different browser profile: they must not see or change the first user's entries or complaints, even via a copied API record ID.
 - English is default. The English/Hindi/Punjabi selector changes labels/errors and persists after refresh. New AI answers use the chosen language; existing generated text stays in its original language, without silently changing stored data.
-- Ask an e-Shram document question; follow the returned official citation. Ask an unsupported question: the answer must acknowledge source limits.
+- Ask a real e-Shram document question; follow the returned web citation. Get Help uses live Gemini Search and does not require admin-published sources. Ask an unsupported question: it must acknowledge source limits.
 - Generate a complaint with fresh facts. Edit it, save, refresh, download the saved text.
 - Temporarily remove the Gemini key and restart the backend: see an honest error, with no synthetic result. Restore it afterwards.
 - A normal user cannot access admin source APIs. A source editor can create/revise drafts but cannot publish or see other people's private data.
@@ -151,4 +151,4 @@ AI requests are limited to ten per signed-in account per UTC hour using an atomi
 - https://ai.google.dev/api/generate-content
 - https://render.com/docs/deploy-nextjs-app
 
-Reference-note sources are recorded directly in `003_official_references.sql` with their review date.
+Optional reference-note sources are recorded in `003_official_references.sql`; Get Help no longer depends on them.
