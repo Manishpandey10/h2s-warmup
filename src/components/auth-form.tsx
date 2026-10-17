@@ -92,6 +92,8 @@ export function AuthForm({ admin = false }: { admin?: boolean }) {
             name="email"
             type="email"
             autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
             required
             maxLength={254}
           />
