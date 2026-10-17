@@ -93,13 +93,13 @@ After approval, archive/remove the old published version manually if it has been
 
 For the fewest steps, deploy ONE Render **Web Service** (not a Static Site) containing the entire app:
 
-| Setting | Value |
-| --- | --- |
-| Repository | This app's GitHub repository |
-| Root directory | Empty if this folder is the repository root; otherwise this folder's repository-relative path |
-| Build command | `npm install && npm run build` initially; use `npm ci && npm run build` after committing the lockfile |
-| Start command | `npm start` |
-| Node version | 22 or later |
+| Setting        | Value                                                                                                 |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| Repository     | This app's GitHub repository                                                                          |
+| Root directory | Empty if this folder is the repository root; otherwise this folder's repository-relative path         |
+| Build command  | `npm install && npm run build` initially; use `npm ci && npm run build` after committing the lockfile |
+| Start command  | `npm start`                                                                                           |
+| Node version   | 22 or later                                                                                           |
 
 Set the Supabase and Gemini variables in Render Environment. Optional admin test label variables go here too.
 Leave `NEXT_PUBLIC_API_BASE_URL` empty: frontend and backend are on the same service.

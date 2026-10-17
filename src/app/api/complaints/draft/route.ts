@@ -10,12 +10,18 @@ export async function POST(request: Request) {
     if (!input.success) throw new ApiError(400, "INVALID_INPUT");
     requireAiConfiguration();
     await claimAiRequest(db);
-    const draft = await generateJson(`${plainLanguageRules}
+    const draft = await generateJson(
+      `${plainLanguageRules}
 Prepare a polite factual complaint from ONLY the supplied facts. The user has supplied their name, recipient,
 issue date, issue details and requested resolution. Do not add dates, transaction IDs, amounts, evidence,
 legal threats, legislation, deadlines, attachments, or assurances not stated by the user.
 This is a draft for the worker to review and send themselves. Do not claim legal validity.
-Use a brief subject and a short letter, maximum 220 words. Return {"title":string,"body":string}.`, input.data, complaintDraftSchema);
+Use a brief subject and a short letter, maximum 220 words. Return {"title":string,"body":string}.`,
+      input.data,
+      complaintDraftSchema,
+    );
     return json(draft);
-  } catch (error) { return apiFailure(error); }
+  } catch (error) {
+    return apiFailure(error);
+  }
 }

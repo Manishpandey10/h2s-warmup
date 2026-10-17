@@ -11,9 +11,12 @@ describe("money is exact and bounded", () => {
     expect(toPaise("900.50")! - toPaise("200.25")!).toBe(70025);
     expect(toRupees(70025)).toBe("700.25");
   });
-  it.each(["-1", "1e3", "2.999", "NaN", "₹50", "1,000", "1000000.01", ""])("rejects invalid amount %s", (value) => {
-    expect(toPaise(value)).toBeNull();
-  });
+  it.each(["-1", "1e3", "2.999", "NaN", "₹50", "1,000", "1000000.01", ""])(
+    "rejects invalid amount %s",
+    (value) => {
+      expect(toPaise(value)).toBeNull();
+    },
+  );
 });
 
 describe("Indian dates and real calendar validation", () => {
@@ -28,7 +31,14 @@ describe("Indian dates and real calendar validation", () => {
 });
 
 describe("earnings input", () => {
-  const entry = { work_date: "2024-01-01", received_paise: 100, expense_paise: 0, pending_paise: 0, minutes_worked: 60, note: "" };
+  const entry = {
+    work_date: "2024-01-01",
+    received_paise: 100,
+    expense_paise: 0,
+    pending_paise: 0,
+    minutes_worked: 60,
+    note: "",
+  };
   it("rejects browser-supplied ownership and fractional paise", () => {
     expect(earningInputSchema.safeParse({ ...entry, user_id: "someone-else" }).success).toBe(false);
     expect(earningInputSchema.safeParse({ ...entry, received_paise: 0.5 }).success).toBe(false);
@@ -39,8 +49,17 @@ describe("earnings input", () => {
     expect(earningInputSchema.safeParse({ ...entry, minutes_worked: 1441 }).success).toBe(false);
   });
   it("permits expense-only entries but rejects completely empty entries", () => {
-    expect(earningInputSchema.safeParse({ ...entry, received_paise: 0, minutes_worked: 0, expense_paise: 500 }).success).toBe(true);
-    expect(earningInputSchema.safeParse({ ...entry, received_paise: 0, minutes_worked: 0 }).success).toBe(false);
+    expect(
+      earningInputSchema.safeParse({
+        ...entry,
+        received_paise: 0,
+        minutes_worked: 0,
+        expense_paise: 500,
+      }).success,
+    ).toBe(true);
+    expect(
+      earningInputSchema.safeParse({ ...entry, received_paise: 0, minutes_worked: 0 }).success,
+    ).toBe(false);
   });
 });
 
@@ -52,9 +71,24 @@ describe("guidance and complaints", () => {
     expect(isOfficialUrl("https://user:secret@eshram.gov.in/faqs")).toBe(false);
   });
   it("rejects uncited AI guidance", () => {
-    expect(helpOutputSchema.safeParse({ answer: "An unsupported answer", next_step: "Apply", source_ids: [] }).success).toBe(false);
+    expect(
+      helpOutputSchema.safeParse({
+        answer: "An unsupported answer",
+        next_step: "Apply",
+        source_ids: [],
+      }).success,
+    ).toBe(false);
   });
   it("requires the real complaint facts before generating", () => {
-    expect(complaintFactsSchema.safeParse({ worker_name: "Worker", recipient: "Support", issue_date: "2024-01-01", details: "", requested_resolution: "", language: "en" }).success).toBe(false);
+    expect(
+      complaintFactsSchema.safeParse({
+        worker_name: "Worker",
+        recipient: "Support",
+        issue_date: "2024-01-01",
+        details: "",
+        requested_resolution: "",
+        language: "en",
+      }).success,
+    ).toBe(false);
   });
 });

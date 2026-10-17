@@ -4,7 +4,12 @@ import { NextResponse } from "next/server";
 import { supabaseConfig } from "./supabase/config";
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string) { super(code); }
+  constructor(
+    public status: number,
+    public code: string,
+  ) {
+    super(code);
+  }
 }
 
 export async function authenticatedDatabase(request: Request) {
@@ -15,7 +20,7 @@ export async function authenticatedDatabase(request: Request) {
   const token = header.slice(7);
   const db = createClient(config.url, config.key, {
     global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   // Verify with Supabase Auth; never trust a browser-supplied user ID or decoded token alone.
   const { data, error } = await db.auth.getUser(token);
@@ -24,7 +29,8 @@ export async function authenticatedDatabase(request: Request) {
 }
 
 export async function limitedJson(request: Request, maxBytes = 8192): Promise<unknown> {
-  if (!request.headers.get("content-type")?.includes("application/json")) throw new ApiError(415, "INVALID_INPUT");
+  if (!request.headers.get("content-type")?.includes("application/json"))
+    throw new ApiError(415, "INVALID_INPUT");
   const reader = request.body?.getReader();
   if (!reader) throw new ApiError(400, "INVALID_INPUT");
   let length = 0;
@@ -40,12 +46,20 @@ export async function limitedJson(request: Request, maxBytes = 8192): Promise<un
       }
       chunks.push(value);
     }
-  } finally { reader.releaseLock(); }
+  } finally {
+    reader.releaseLock();
+  }
   const bytes = new Uint8Array(length);
   let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-  try { return JSON.parse(new TextDecoder().decode(bytes)); }
-  catch { throw new ApiError(400, "INVALID_INPUT"); }
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new ApiError(400, "INVALID_INPUT");
+  }
 }
 
 export function json(data: unknown, status = 200) {

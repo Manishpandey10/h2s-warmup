@@ -1,2 +1,4 @@
 import { AppShell } from "@/components/app-shell";
-export default function LoginPage() { return <AppShell loginOnly />; }
+export default function LoginPage() {
+  return <AppShell loginOnly />;
+}

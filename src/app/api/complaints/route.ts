@@ -4,10 +4,17 @@ import { complaintSaveSchema } from "@/lib/complaints";
 export async function GET(request: Request) {
   try {
     const { db, userId } = await authenticatedDatabase(request);
-    const { data, error } = await db.from("complaints").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(20);
+    const { data, error } = await db
+      .from("complaints")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
     if (error) throw new ApiError(503, "DATABASE_ERROR");
     return json({ complaints: data });
-  } catch (error) { return apiFailure(error); }
+  } catch (error) {
+    return apiFailure(error);
+  }
 }
 
 export async function POST(request: Request) {
@@ -20,5 +27,7 @@ export async function POST(request: Request) {
     if (error?.code === "23505") throw new ApiError(409, "DUPLICATE_ENTRY");
     if (error) throw new ApiError(503, "DATABASE_ERROR");
     return json({ saved: true }, 201);
-  } catch (error) { return apiFailure(error); }
+  } catch (error) {
+    return apiFailure(error);
+  }
 }

@@ -4,6 +4,8 @@ export function supabaseConfig() {
   if (!url || !key) return null;
   try {
     if (new URL(url).protocol !== "https:") return null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
   return { url, key };
 }

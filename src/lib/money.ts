@@ -13,6 +13,9 @@ export function toRupees(paise: number): string {
 
 export function money(paise: number, language: "en" | "hi"): string {
   return new Intl.NumberFormat(language === "hi" ? "hi-IN" : "en-IN", {
-    style: "currency", currency: "INR", minimumFractionDigits: 0, maximumFractionDigits: 2
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(paise / 100);
 }

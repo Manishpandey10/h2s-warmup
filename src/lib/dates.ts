@@ -1,6 +1,9 @@
 export function indiaDate(now = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit"
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).formatToParts(now);
   const part = (name: string) => parts.find((value) => value.type === name)!.value;
   return `${part("year")}-${part("month")}-${part("day")}`;
