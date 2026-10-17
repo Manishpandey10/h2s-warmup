@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "./language-provider";
 import { EarningForm } from "./earning-form";
 import { indiaDate } from "@/lib/dates";
 import { money } from "@/lib/money";
+import { localeFor } from "@/lib/locale";
 import { apiRequest, ClientApiError } from "@/lib/client-api";
 import {
   earningsResponseSchema,
@@ -13,9 +15,12 @@ import {
   type EarningsResponse,
 } from "@/lib/earnings";
 import { errorMessage, type MessageKey } from "@/lib/i18n";
+import { featureCopy } from "@/lib/feature-copy";
+import { UiIcon } from "./ui-icon";
 
 export function EarningsDashboard() {
   const { language, t } = useLanguage();
+  const c = featureCopy(language);
   const [month, setMonth] = useState(indiaDate().slice(0, 7));
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
@@ -84,8 +89,9 @@ export function EarningsDashboard() {
 
   return (
     <>
-      <div className="section-heading">
+      <div className="section-heading dashboard-hero">
         <div>
+          <span className="hero-icon"><UiIcon name="wallet" size={25} /></span>
           <span className="eyebrow">{t.earnings}</span>
           <h1>{t.welcome}</h1>
           <p className="muted">{t.earningsIntro}</p>
@@ -108,6 +114,18 @@ export function EarningsDashboard() {
           />
         </div>
       </div>
+      <div className="quick-actions" aria-label={t.mainNavigation}>
+        <Link href="/help" className="quick-action">
+          <span className="quick-icon"><UiIcon name="help" size={23} /></span>
+          <span><strong>{t.getHelp}</strong><small>{c.helpIntro}</small></span>
+          <UiIcon name="arrow" size={19} />
+        </Link>
+        <Link href="/complaints" className="quick-action">
+          <span className="quick-icon"><UiIcon name="document" size={23} /></span>
+          <span><strong>{t.writeComplaint}</strong><small>{c.complaintIntro}</small></span>
+          <UiIcon name="arrow" size={19} />
+        </Link>
+      </div>
       <section aria-label={t.summary} aria-busy={loading}>
         {loading ? (
           <p role="status" className="notice">
@@ -126,7 +144,7 @@ export function EarningsDashboard() {
               </div>
               <p className="hint">
                 {t.netHelp} · {t.hours}:{" "}
-                {(total.minutes_worked / 60).toLocaleString(language === "hi" ? "hi-IN" : "en-IN", {
+                {(total.minutes_worked / 60).toLocaleString(localeFor(language), {
                   maximumFractionDigits: 1,
                 })}
               </p>
@@ -183,7 +201,7 @@ export function EarningsDashboard() {
               {result.entries.map((entry) => (
                 <li key={entry.id} className="entry">
                   <time dateTime={entry.work_date}>
-                    {new Intl.DateTimeFormat(language === "hi" ? "hi-IN" : "en-IN", {
+                    {new Intl.DateTimeFormat(localeFor(language), {
                       dateStyle: "medium",
                       timeZone: "UTC",
                     }).format(new Date(`${entry.work_date}T00:00:00Z`))}
@@ -205,7 +223,7 @@ export function EarningsDashboard() {
                       <dt>{t.hours}</dt>
                       <dd>
                         {(entry.minutes_worked / 60).toLocaleString(
-                          language === "hi" ? "hi-IN" : "en-IN",
+                          localeFor(language),
                           { maximumFractionDigits: 1 },
                         )}
                       </dd>

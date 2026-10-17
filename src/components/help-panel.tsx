@@ -1,12 +1,22 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { UiIcon, type IconName } from "./ui-icon";
 import { z } from "zod";
 import { useLanguage } from "./language-provider";
 import { featureCopy, aiErrorKey } from "@/lib/feature-copy";
 import { helpInputSchema, helpOutputSchema } from "@/lib/guidance";
 import { apiRequest, ClientApiError } from "@/lib/client-api";
-import { errorMessage } from "@/lib/i18n";
+import { errorMessage, type Language } from "@/lib/i18n";
+import { occupationFor, workerTypes, type WorkerType } from "@/lib/worker-types";
+
+const workerIcons: Record<WorkerType, IconName> = {
+  delivery: "bike",
+  driver: "car",
+  dailyWage: "hammer",
+  domestic: "home",
+  other: "briefcase",
+};
 
 const responseSchema = helpOutputSchema.extend({
   sources: z.array(
@@ -24,8 +34,9 @@ export function HelpPanel() {
   const { language, t } = useLanguage();
   const c = featureCopy(language);
   const [busy, setBusy] = useState(false);
+  const [workerType, setWorkerType] = useState<WorkerType | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [answer, setAnswer] = useState<{ data: Answer; language: "en" | "hi" } | null>(null);
+  const [answer, setAnswer] = useState<{ data: Answer; language: Language } | null>(null);
   const renderError = error
     ? aiErrorKey(error)
       ? c[aiErrorKey(error)!]
@@ -39,7 +50,7 @@ export function HelpPanel() {
       question: form.get("question"),
       category: form.get("category"),
       state: form.get("state"),
-      occupation: form.get("occupation"),
+      occupation: occupationFor(workerType ?? "other", String(form.get("occupation") ?? "")),
       language,
     });
     if (!input.success) {
@@ -63,12 +74,43 @@ export function HelpPanel() {
   }
 
   return (
-    <div className="narrow">
-      <h1>{c.help}</h1>
-      <p className="muted">{c.helpIntro}</p>
+    <div className="narrow page-stack">
+      <div className="page-hero">
+        <span className="hero-icon"><UiIcon name="sparkles" size={25} /></span>
+        <h1>{c.help}</h1>
+        <p className="muted">{c.helpIntro}</p>
+      </div>
       <section className="card">
         <form onSubmit={submit}>
           <fieldset disabled={busy}>
+            <fieldset className="worker-fieldset">
+              <legend>{c.workerType}</legend>
+              <p className="hint">{c.workerTypeIntro}</p>
+              <div className="worker-grid">
+                {workerTypes.map((type) => {
+                  return (
+                    <label className="worker-option" key={type}>
+                      <input
+                        type="radio"
+                        name="worker-type"
+                        value={type}
+                        checked={workerType === type}
+                        onChange={() => setWorkerType(type)}
+                        required
+                      />
+                      <span className="worker-icon"><UiIcon name={workerIcons[type]} size={24} /></span>
+                      <span>{c[type]}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+            {workerType === "other" && (
+              <div>
+                <label htmlFor="occupation">{c.occupation}</label>
+                <input name="occupation" id="occupation" required minLength={2} maxLength={100} />
+              </div>
+            )}
             <label htmlFor="category">{c.category}</label>
             <select name="category" id="category">
               {(["schemes", "rights", "safety", "documents"] as const).map((value) => (
@@ -77,23 +119,15 @@ export function HelpPanel() {
                 </option>
               ))}
             </select>
-            <div className="form-grid">
-              <div>
-                <label htmlFor="state">{c.state}</label>
-                <input
-                  name="state"
-                  id="state"
-                  required
-                  minLength={2}
-                  maxLength={80}
-                  autoComplete="address-level1"
-                />
-              </div>
-              <div>
-                <label htmlFor="occupation">{c.occupation}</label>
-                <input name="occupation" id="occupation" required minLength={2} maxLength={100} />
-              </div>
-            </div>
+            <label htmlFor="state">{c.state}</label>
+            <input
+              name="state"
+              id="state"
+              required
+              minLength={2}
+              maxLength={80}
+              autoComplete="address-level1"
+            />
             <label htmlFor="question">{c.question}</label>
             <textarea
               id="question"
@@ -109,6 +143,7 @@ export function HelpPanel() {
             </p>
             <button className="primary" type="submit">
               {busy ? c.thinking : c.ask}
+              {!busy && <UiIcon name="arrow" size={19} />}
             </button>
           </fieldset>
         </form>
@@ -124,7 +159,7 @@ export function HelpPanel() {
         </p>
       )}
       {answer && (
-        <section className="card" aria-live="polite">
+        <section className="card answer-card" aria-live="polite">
           <div lang={answer.language}>
             <p className="answer">{answer.data.answer}</p>
             <h2>{c.nextStep}</h2>

@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { indiaDate, isRealDate, monthBounds } from "../src/lib/dates";
 import { toPaise, toRupees } from "../src/lib/money";
 import { earningInputSchema } from "../src/lib/earnings";
-import { isOfficialUrl, helpOutputSchema } from "../src/lib/guidance";
+import { isOfficialUrl, helpInputSchema, helpOutputSchema } from "../src/lib/guidance";
 import { complaintFactsSchema } from "../src/lib/complaints";
+import { localeFor } from "../src/lib/locale";
+import { featureCopy } from "../src/lib/feature-copy";
+import { messages } from "../src/lib/i18n";
 
 describe("money is exact and bounded", () => {
   it("preserves paise without floating point multiplication", () => {
@@ -64,6 +67,26 @@ describe("earnings input", () => {
 });
 
 describe("guidance and complaints", () => {
+  it("accepts Punjabi for both AI flows and provides localized labels", () => {
+    expect(helpInputSchema.safeParse({
+      question: "ਮੈਨੂੰ ਕਿਹੜੇ ਦਸਤਾਵੇਜ਼ ਚਾਹੀਦੇ ਹਨ?",
+      category: "documents",
+      state: "Punjab",
+      occupation: "Driver",
+      language: "pa",
+    }).success).toBe(true);
+    expect(complaintFactsSchema.safeParse({
+      worker_name: "Gurpreet Singh",
+      recipient: "Platform support",
+      issue_date: "2024-01-01",
+      details: "Payment for my completed delivery has not arrived.",
+      requested_resolution: "Please release the pending payment.",
+      language: "pa",
+    }).success).toBe(true);
+    expect(localeFor("pa")).toBe("pa-IN");
+    expect(messages.pa.earnings).toBe("ਮੇਰੀ ਕਮਾਈ");
+    expect(featureCopy("pa").help).toBe("ਮਦਦ ਲਵੋ");
+  });
   it("does not accept lookalike official domains or unsafe protocols", () => {
     expect(isOfficialUrl("https://eshram.gov.in/faqs")).toBe(true);
     expect(isOfficialUrl("https://eshram.gov.in.attacker.com/faqs")).toBe(false);

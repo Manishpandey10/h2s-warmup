@@ -1,5 +1,5 @@
 import { authenticatedDatabase, apiFailure, ApiError, json, limitedJson } from "@/lib/api";
-import { claimAiRequest, generateJson, plainLanguageRules, requireAiConfiguration } from "@/lib/ai";
+import { answerLanguageRule, claimAiRequest, generateJson, plainLanguageRules, requireAiConfiguration } from "@/lib/ai";
 import { complaintDraftSchema, complaintFactsSchema } from "@/lib/complaints";
 
 export const maxDuration = 60;
@@ -12,6 +12,8 @@ export async function POST(request: Request) {
     await claimAiRequest(db);
     const draft = await generateJson(
       `${plainLanguageRules}
+${answerLanguageRule(input.data.language)}
+Apply this language rule to both title and body, regardless of the language used in the worker's facts.
 Prepare a polite factual complaint from ONLY the supplied facts. The user has supplied their name, recipient,
 issue date, issue details and requested resolution. Do not add dates, transaction IDs, amounts, evidence,
 legal threats, legislation, deadlines, attachments, or assurances not stated by the user.

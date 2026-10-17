@@ -15,10 +15,8 @@ Each file uses a transaction. If a file fails, fix that file's error before proc
 Do not rerun a successful migration: tables/functions intentionally are not silently overwritten.
 The third file contains actual reviewed government reference notes, not dummy worker data.
 
-In Authentication settings, keep Email/password enabled. Set your Site URL to your frontend URL.
-For public signups with confirmation enabled, use a working email delivery configuration and confirm email before signing in.
-For the quickest evaluator setup, use Authentication → Users → Add user to create confirmed worker and admin test accounts, with passwords of at least 8 characters.
-You can keep confirmation enabled; a manually confirmed evaluator account does not need to receive email at login.
+In Authentication → Providers → Email, keep Email/password enabled and turn **Confirm Email off** for the agreed immediate-sign-in flow. Set your Site URL to your frontend URL. Save and refresh the dashboard to verify the setting persisted. With confirmation off, Supabase treats new email addresses as confirmed without proving ownership; the app does not claim that an email was verified or gate AI on email verification. No SMTP configuration is needed for signup in this flow.
+For evaluator access, use Authentication → Users → Add user to create worker and admin test accounts with passwords of at least 8 characters.
 
 ## 2. Environment
 
@@ -42,7 +40,7 @@ GEMINI_MODEL=gemini-3.8-flash
 
 Set a model available to your actual account. A model listed in documentation does not guarantee your key has access or quota.
 The server uses a real Gemini generateContent request. Missing keys, quota errors, blocked/incomplete results and malformed responses produce errors, never canned answers.
-The prompt asks for short English or Hindi answers; the model may still make factual mistakes. Check citations and complaint facts before submitting.
+The prompt asks for short English, Hindi, or Punjabi answers; the model may still make factual mistakes. Check citations and complaint facts before submitting.
 
 ## 3. Install and run locally
 
@@ -118,11 +116,11 @@ Neither setup needs a direct PostgreSQL connection string.
 
 ## 6. Hands-on submission checks
 
-- New confirmed worker account starts empty.
+- New worker account can sign in immediately after signup and starts empty.
 - Save your own earnings; refresh; edit; delete with confirmation. Confirm totals across pagination and month changes.
 - Check expenses greater than received, pending-only entries, decimal amounts, invalid dates, and more than 24 hours.
 - Use a second user in a different browser profile: they must not see or change the first user's entries or complaints, even via a copied API record ID.
-- English is default. Hindi switch changes labels/errors and persists after refresh. New AI answers use the chosen language; existing generated text stays in its original language, without silently changing stored data.
+- English is default. The English/Hindi/Punjabi selector changes labels/errors and persists after refresh. New AI answers use the chosen language; existing generated text stays in its original language, without silently changing stored data.
 - Ask an e-Shram document question; follow the returned official citation. Ask an unsupported question: the answer must acknowledge source limits.
 - Generate a complaint with fresh facts. Edit it, save, refresh, download the saved text.
 - Temporarily remove the Gemini key and restart the backend: see an honest error, with no synthetic result. Restore it afterwards.

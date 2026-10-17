@@ -1,3 +1,6 @@
+import type { Language } from "./i18n";
+import { localeFor } from "./locale";
+
 // Store and calculate integer paise, avoiding floating-point currency arithmetic.
 export function toPaise(value: string): number | null {
   const text = value.trim();
@@ -11,8 +14,8 @@ export function toRupees(paise: number): string {
   return (paise / 100).toFixed(2);
 }
 
-export function money(paise: number, language: "en" | "hi"): string {
-  return new Intl.NumberFormat(language === "hi" ? "hi-IN" : "en-IN", {
+export function money(paise: number, language: Language): string {
+  return new Intl.NumberFormat(localeFor(language), {
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 0,

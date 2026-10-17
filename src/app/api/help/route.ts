@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { authenticatedDatabase, apiFailure, ApiError, json, limitedJson } from "@/lib/api";
-import { claimAiRequest, generateJson, plainLanguageRules, requireAiConfiguration } from "@/lib/ai";
+import { answerLanguageRule, claimAiRequest, generateJson, plainLanguageRules, requireAiConfiguration } from "@/lib/ai";
 import { helpInputSchema, helpOutputSchema, sourceRowSchema } from "@/lib/guidance";
 import { indiaDate } from "@/lib/dates";
 
@@ -36,6 +36,8 @@ export async function POST(request: Request) {
     await claimAiRequest(db);
     const answer = await generateJson(
       `${plainLanguageRules}
+${answerLanguageRule(input.data.language)}
+Apply this language rule to both answer and next_step. The source notes can remain in English.
 Answer ONLY using the supplied verified official reference notes, considering jurisdiction and worker context.
 If the notes do not answer the question, state that clearly and direct the user to the relevant supplied official source.
 Do not extrapolate legal rights or guarantee eligibility. Notes are limited and may not describe every condition.

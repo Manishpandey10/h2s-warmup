@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AuthForm } from "./auth-form";
 import { useLanguage } from "./language-provider";
 import { browserSupabase } from "@/lib/supabase/browser";
 import { supabaseConfig } from "@/lib/supabase/config";
+import { featureCopy } from "@/lib/feature-copy";
+import { UiIcon } from "./ui-icon";
 
 export function AppShell({
   children,
@@ -17,7 +20,8 @@ export function AppShell({
   loginOnly?: boolean;
   admin?: boolean;
 }) {
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
+  const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
@@ -81,28 +85,53 @@ export function AppShell({
       <header className="header">
         <div className="container header-inner">
           <Link className="brand" href="/">
-            <span className="brand-mark" aria-hidden="true">
-              र
-            </span>
+            <span className="brand-mark"><UiIcon name="heart" size={24} /></span>
             <span>
               RozMitra
               <small>
-                {language === "hi" ? "हर दिन का साथी" : "A companion for your working day"}
+                {t.brandTagline}
               </small>
             </span>
           </Link>
+          {session && !loginOnly && (
+            <nav className="app-nav" aria-label={t.mainNavigation}>
+              {admin ? (
+                <Link href="/admin" className="nav-link" aria-current="page">
+                  <UiIcon name="document" size={18} />{featureCopy(language).admin}
+                </Link>
+              ) : (
+                <>
+                  <Link href="/" className="nav-link" aria-current={pathname === "/" ? "page" : undefined}>
+                    <UiIcon name="wallet" size={18} />{t.earnings}
+                  </Link>
+                  <Link href="/help" className="nav-link" aria-current={pathname === "/help" ? "page" : undefined}>
+                    <UiIcon name="help" size={18} />{t.getHelp}
+                  </Link>
+                  <Link href="/complaints" className="nav-link" aria-current={pathname === "/complaints" ? "page" : undefined}>
+                    <UiIcon name="document" size={18} />{t.writeComplaint}
+                  </Link>
+                </>
+              )}
+            </nav>
+          )}
           <div className="header-actions">
-            <button
-              className="language-switch"
-              type="button"
-              onClick={toggleLanguage}
-              aria-label={t.language}
-              lang={language === "en" ? "hi" : "en"}
-            >
-              {language === "en" ? "हिन्दी" : "English"}
-            </button>
+            <UiIcon name="globe" className="language-icon" size={19} />
+            <label className="language-control">
+              <span className="sr-only">{t.language}</span>
+              <select
+                className="language-switch"
+                aria-label={t.language}
+                value={language}
+                onChange={(event) => setLanguage(event.target.value as "en" | "hi" | "pa")}
+              >
+                <option value="en" lang="en">English</option>
+                <option value="hi" lang="hi">हिन्दी</option>
+                <option value="pa" lang="pa">ਪੰਜਾਬੀ</option>
+              </select>
+            </label>
             {session && (
               <button className="secondary" type="button" disabled={signingOut} onClick={signOut}>
+                <UiIcon name="logout" size={18} />
                 {signingOut ? t.signingOut : t.signOut}
               </button>
             )}
@@ -131,34 +160,20 @@ export function AppShell({
                 {t.networkError}
               </p>
             )}
-            {admin && (
-              <p className="eyebrow">{language === "hi" ? "एडमिन साइन इन" : "Admin sign in"}</p>
-            )}
+            {admin && <p className="eyebrow">{t.adminSignIn}</p>}
             <AuthForm admin={admin} />
           </>
         ) : (
           <div key={session.user.id}>
             {loginOnly ? (
               <section className="card">
-                <h1>{language === "hi" ? "साइन इन हो गया" : "You are signed in"}</h1>
+                <h1>{t.signedIn}</h1>
                 <Link className="button primary" href={admin ? "/admin" : "/"}>
-                  {language === "hi" ? "आगे बढ़ें" : "Continue"}
+                  {t.continue}
                 </Link>
               </section>
             ) : (
-              <>
-                <nav
-                  className="app-nav"
-                  aria-label={language === "hi" ? "मुख्य नेविगेशन" : "Main navigation"}
-                >
-                  <Link href="/">{t.earnings}</Link>
-                  <Link href="/help">{language === "hi" ? "मदद" : "Get help"}</Link>
-                  <Link href="/complaints">
-                    {language === "hi" ? "शिकायत लिखें" : "Write a complaint"}
-                  </Link>
-                </nav>
-                {children}
-              </>
+              children
             )}
           </div>
         )}
@@ -166,13 +181,7 @@ export function AppShell({
       <footer className="container footer">
         <span>{t.footer}</span>
         <Link href={admin ? "/login" : "/admin/login"}>
-          {admin
-            ? language === "hi"
-              ? "यूज़र साइन इन"
-              : "User sign in"
-            : language === "hi"
-              ? "एडमिन साइन इन"
-              : "Admin sign in"}
+          {admin ? t.userSignIn : t.adminSignIn}
         </Link>
       </footer>
     </>

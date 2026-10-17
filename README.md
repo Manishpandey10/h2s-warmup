@@ -27,6 +27,7 @@ No separate Render backend is needed for the initial scope.
 ## Login and admin
 
 - User login: /login. Admin login: /admin/login. Source editor: /admin.
+- Signup signs the worker in immediately when Confirm Email is disabled in Supabase Auth. Email ownership is not verified in this mode.
 - Admin membership is checked server-side and enforced in database policies.
 - A restricted source editor can add/edit only their own draft sources. The project owner approves publication manually in Supabase.
 - Optional actual test credentials are displayed on the admin login page after the owner creates that dedicated account and configures the environment.
@@ -39,7 +40,7 @@ No separate Render backend is needed for the initial scope.
 - Never replace a failed model call with a canned answer; show an error and retry option.
 - Verify authentication and ownership for user data access.
 - Keep model keys on the server; never commit secrets.
-- Default to English with a visible Hindi language switch. Translate interface labels, validation errors, and AI answers; persist the language preference.
+- Default to English with a visible English/Hindi/Punjabi selector. Translate interface labels, validation errors, and new AI answers; persist the language preference.
 - Keep answers short and actionable, with optional expanded detail, large controls, and clear labels for older and less technical users.
 - Start every account with an honest empty state. Never seed production dashboards with sample earnings, complaints, users, or activity.
 - Save actual user inputs in the database; verify that they survive refresh and sign-in.

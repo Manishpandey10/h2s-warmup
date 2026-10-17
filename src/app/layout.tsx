@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "RozMitra — Your working day, made simpler",
   description:
-    "Track earnings, understand official support, and prepare complaints in simple English or Hindi.",
+    "Track earnings, understand official support, and prepare complaints in simple English, Hindi, or Punjabi.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

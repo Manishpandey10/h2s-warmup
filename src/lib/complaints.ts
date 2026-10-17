@@ -10,7 +10,7 @@ export const complaintFactsSchema = z
       .refine((value) => isRealDate(value) && value >= "2000-01-01" && value <= indiaDate()),
     details: z.string().trim().min(20).max(1800),
     requested_resolution: z.string().trim().min(5).max(500),
-    language: z.enum(["en", "hi"]),
+    language: z.enum(["en", "hi", "pa"]),
   })
   .strict();
 export const complaintDraftSchema = z

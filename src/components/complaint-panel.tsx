@@ -14,6 +14,7 @@ import {
 import { apiRequest, ClientApiError } from "@/lib/client-api";
 import { errorMessage } from "@/lib/i18n";
 import { indiaDate } from "@/lib/dates";
+import { UiIcon } from "./ui-icon";
 
 const historySchema = z.object({ complaints: z.array(complaintRowSchema) });
 function download(title: string, body: string) {
@@ -125,9 +126,12 @@ export function ComplaintPanel() {
       : t[errorMessage(error)]
     : null;
   return (
-    <div className="narrow">
-      <h1>{c.complaints}</h1>
-      <p className="muted">{c.complaintIntro}</p>
+    <div className="narrow page-stack">
+      <div className="page-hero">
+        <span className="hero-icon"><UiIcon name="document" size={25} /></span>
+        <h1>{c.complaints}</h1>
+        <p className="muted">{c.complaintIntro}</p>
+      </div>
       {!draft && (
         <section className="card">
           <form onSubmit={generate}>

@@ -41,7 +41,7 @@ export const helpInputSchema = z
     category: z.enum(["schemes", "rights", "safety", "documents"]),
     state: z.string().trim().min(2).max(80),
     occupation: z.string().trim().min(2).max(100),
-    language: z.enum(["en", "hi"]),
+    language: z.enum(["en", "hi", "pa"]),
   })
   .strict();
 export const helpOutputSchema = z

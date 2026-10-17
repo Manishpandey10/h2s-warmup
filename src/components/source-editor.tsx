@@ -8,6 +8,7 @@ import { apiRequest, ClientApiError } from "@/lib/client-api";
 import { errorMessage } from "@/lib/i18n";
 import { sourceInputSchema, sourceRowSchema, type GuidanceSource } from "@/lib/guidance";
 import { indiaDate } from "@/lib/dates";
+import { UiIcon } from "./ui-icon";
 
 export function SourceEditor() {
   const { language, t } = useLanguage();
@@ -85,9 +86,12 @@ export function SourceEditor() {
       : t[errorMessage(error)]
     : null;
   return (
-    <div className="narrow">
-      <h1>{c.admin}</h1>
-      <p className="muted">{c.adminIntro}</p>
+    <div className="narrow page-stack">
+      <div className="page-hero">
+        <span className="hero-icon"><UiIcon name="document" size={25} /></span>
+        <h1>{c.admin}</h1>
+        <p className="muted">{c.adminIntro}</p>
+      </div>
       {renderError && (
         <div className="error" role="alert">
           <p>{renderError}</p>

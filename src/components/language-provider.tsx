@@ -3,9 +3,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { messages, type Language } from "@/lib/i18n";
 
-const LanguageContext = createContext<{ language: Language; toggleLanguage: () => void }>({
+const LanguageContext = createContext<{ language: Language; setLanguage: (value: Language) => void }>({
   language: "en",
-  toggleLanguage: () => {},
+  setLanguage: () => {},
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
@@ -13,7 +13,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("rozmitra-language");
-      if (saved === "hi" || saved === "en") setLanguage(saved);
+      if (saved === "hi" || saved === "en" || saved === "pa") setLanguage(saved);
     } catch {
       /* The switch still works when browser storage is unavailable. */
     }
@@ -21,17 +21,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
-  function toggleLanguage() {
-    const next = language === "en" ? "hi" : "en";
-    setLanguage(next);
+  function chooseLanguage(value: Language) {
+    setLanguage(value);
     try {
-      localStorage.setItem("rozmitra-language", next);
+      localStorage.setItem("rozmitra-language", value);
     } catch {
       /* Optional persistence. */
     }
   }
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage }}>
+    <LanguageContext.Provider value={{ language, setLanguage: chooseLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
